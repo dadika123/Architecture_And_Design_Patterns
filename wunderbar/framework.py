@@ -1,7 +1,7 @@
 import inspect
 from typing import Callable
-from wsgiref.simple_server import make_server
 
+from wunderbar.requests import Request
 from wunderbar.templating import DefaultIndex, PageNotFound404
 
 
@@ -26,6 +26,9 @@ class WunderbarApp:
             start the response
         :return: response body
         """
+        request = Request(environ['REQUEST_METHOD']).get_request(environ)
+        print(f'Got {request["method"]} request with data '
+              f'{request["data"] if "data" in request else request["request_params"]}')
         code, body = self._get_view(environ['PATH_INFO'])
         start_response(code, [('Content-Type', 'text/html')])
         return [body.encode('utf-8')]
@@ -57,16 +60,6 @@ class WunderbarApp:
         :param not_found_cls: a callable function
         """
         self._not_found_view = not_found_cls
-
-    def run(self, host: str = '', port: int = 8080):
-        """
-        Runs server on defined host and port
-        :param host: server host
-        :param port: server port
-        """
-        with make_server(host, port, self) as httpd:
-            print(f'Starting a server on {httpd.server_name}:{httpd.server_port}')
-            httpd.serve_forever()
 
 
 def main():
