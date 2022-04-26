@@ -6,6 +6,7 @@ import quopri
 from typing import Union, List, Type
 
 from patterns.behavioral_patterns import CourseNotifier, ConsoleWriter, Writer
+from patterns.domain_object import DomainObject
 
 
 class User:
@@ -17,7 +18,7 @@ class Teacher(User):
     pass
 
 
-class Student(User):
+class Student(User, DomainObject):
 
     def __init__(self, name):
         self.courses = []

@@ -1,7 +1,9 @@
 from patterns.creational_patterns import Engine, Logger
+from patterns.mappers import MapperRegistry
 from patterns.structural_patterns import route, method_debug, BaseSerializer
 from patterns.behavioral_patterns import SmsSender, EmailSender, ListView, CreateView, TemplateView, ConsoleWriter, \
     FileWriter
+from patterns.unit_of_work import UnitOfWork
 from wunderbar.templating import render
 
 site = Engine()
@@ -9,6 +11,9 @@ logger = Logger('main', [ConsoleWriter, FileWriter])
 sms_sender = SmsSender()
 email_sender = EmailSender()
 routes = {}
+
+UnitOfWork.new_current()
+UnitOfWork.get_current().set_mapper_registry(MapperRegistry)
 
 
 @route(routes, '/')
@@ -136,8 +141,11 @@ class CopyCourse:
 
 @route(routes, url='/students/')
 class Students(ListView):
-    queryset = site.students
     template_name = 'students.html'
+
+    def get_queryset(self):
+        mapper = MapperRegistry.get_mapper_by_name('student')
+        return mapper.all()
 
 
 @route(routes, url='/create-student/')
@@ -148,6 +156,8 @@ class StudentCreate(CreateView):
         name = site.decode_value(data['name'])
         new_student = site.create_user('student', name)
         site.students.add(new_student)
+        new_student.mark_new()
+        UnitOfWork.get_current().commit()
 
 
 @route(routes, url='/add-student/')
