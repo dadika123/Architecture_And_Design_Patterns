@@ -2,7 +2,7 @@ from wsgiref.simple_server import make_server
 
 from patterns.creational_patterns import Logger
 from wunderbar.framework import WunderbarApp
-from urls import routes
+from views import routes
 
 app = WunderbarApp(routes=routes)
 logger = Logger('app')

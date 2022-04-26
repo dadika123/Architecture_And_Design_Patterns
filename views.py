@@ -1,37 +1,47 @@
 from patterns.creational_patterns import Engine, Logger
+from patterns.structural_patterns import route, method_debug
 from wunderbar.templating import render
 
 site = Engine()
 logger = Logger('main')
+routes = {}
 
 
+@route(routes, '/')
 class Index:
     """Index view"""
 
+    @method_debug
     def __call__(self, request):
         logger.log('Index render was called')
         return '200 OK', render('index.html')
 
 
+@route(routes, '/contact/')
 class Contact:
     """Contact view"""
 
+    @method_debug
     def __call__(self, request):
         logger.log('Contact render was called')
         return '200 OK', render('contact.html')
 
 
+@route(routes, '/categories/')
 class Categories:
     """Categories view"""
 
+    @method_debug
     def __call__(self, request):
         logger.log(f'Categories render was called with categories: {", ".join([cat.name for cat in site.categories])}')
         return '200 OK', render('categories.html', objects_list=site.categories)
 
 
+@route(routes, '/create-category/')
 class CreateCategory:
     """Category creation view"""
 
+    @method_debug
     def __call__(self, request):
         if request['method'] == 'POST':
             data = request['data']
@@ -54,17 +64,21 @@ class CreateCategory:
             return '200 OK', render('create-category.html', categories=categories)
 
 
+@route(routes, '/courses/')
 class Courses:
     """Courses view"""
 
+    @method_debug
     def __call__(self, request):
         logger.log('Courses render was called')
         return '200 OK', render('courses.html', objects_list=site.courses)
 
 
+@route(routes, '/category-courses/')
 class CategoryCourses:
     """Category courses view"""
 
+    @method_debug
     def __call__(self, request):
         try:
             category = site.find_category_by_id(int(request['request_params']['id']))
@@ -77,10 +91,12 @@ class CategoryCourses:
             return '400 Bad Request', 'No courses have been added yet'
 
 
+@route(routes, '/create-course/')
 class CreateCourse:
     """Create course view"""
     category_id = None
 
+    @method_debug
     def __call__(self, request):
         if request['method'] == 'POST':
             data = request['data']
@@ -111,9 +127,11 @@ class CreateCourse:
                 return '400 Bad Request', 'Either no category ID was provided or the category does not exist'
 
 
+@route(routes, '/copy-course/')
 class CopyCourse:
     """Copy Course view"""
 
+    @method_debug
     def __call__(self, request):
         request_params = request['request_params']
 

@@ -154,6 +154,11 @@ class Logger(metaclass=SingletonByName):
         with open(filepath, 'a+') as f:
             f.write(f'{text}\n')
 
+    def debug(self, text):
+        debug_text = self._append_dt_to_txt(f'DEBUG: {text}')
+        print(debug_text)
+        self._save_file(self.filepath, debug_text)
+
     def log(self, text):
         log_text = self._append_dt_to_txt(f'LOG: {text}')
         print(log_text)
