@@ -1,77 +1,56 @@
 from patterns.creational_patterns import Engine, Logger
-from patterns.structural_patterns import route, method_debug
+from patterns.structural_patterns import route, method_debug, BaseSerializer
+from patterns.behavioral_patterns import SmsSender, EmailSender, ListView, CreateView, TemplateView, ConsoleWriter, \
+    FileWriter
 from wunderbar.templating import render
 
 site = Engine()
-logger = Logger('main')
+logger = Logger('main', [ConsoleWriter, FileWriter])
+sms_sender = SmsSender()
+email_sender = EmailSender()
 routes = {}
 
 
 @route(routes, '/')
-class Index:
+class Index(TemplateView):
     """Index view"""
-
-    @method_debug
-    def __call__(self, request):
-        logger.log('Index render was called')
-        return '200 OK', render('index.html')
+    template_name = 'index.html'
 
 
 @route(routes, '/contact/')
-class Contact:
+class Contact(TemplateView):
     """Contact view"""
-
-    @method_debug
-    def __call__(self, request):
-        logger.log('Contact render was called')
-        return '200 OK', render('contact.html')
+    template_name = 'contact.html'
 
 
 @route(routes, '/categories/')
-class Categories:
+class Categories(ListView):
     """Categories view"""
-
-    @method_debug
-    def __call__(self, request):
-        logger.log(f'Categories render was called with categories: {", ".join([cat.name for cat in site.categories])}')
-        return '200 OK', render('categories.html', objects_list=site.categories)
+    queryset = site.categories
+    template_name = 'categories.html'
 
 
 @route(routes, '/create-category/')
-class CreateCategory:
+class CreateCategory(CreateView):
     """Category creation view"""
+    template_name = 'create-category.html'
 
-    @method_debug
-    def __call__(self, request):
-        if request['method'] == 'POST':
-            data = request['data']
+    def create_obj(self, data: dict):
+        name = site.decode_value(data['name'])
+        category = None
+        if category_id := data.get('category_id'):
+            category = site.find_category_by_id(int(category_id))
 
-            name = data['name']
-            name = site.decode_value(name)
-
-            category = None
-            if category_id := data.get('category_id'):
-                category = site.find_category_by_id(int(category_id))
-
-            new_category = site.create_category(name, category)
-            site.categories.add(new_category)
-
-            logger.log(f'Category "{name}" was created')
-            return '200 OK', render('categories.html', objects_list=site.categories)
-        else:
-            categories = site.categories
-            logger.log(f'Category creation was rendered with: {", ".join([cat.name for cat in categories])}')
-            return '200 OK', render('create-category.html', categories=categories)
+        new_category = site.create_category(name, category)
+        site.categories.add(new_category)
+        logger.log(f'Category "{name}" was created')
 
 
 @route(routes, '/courses/')
-class Courses:
+class Courses(ListView):
     """Courses view"""
-
-    @method_debug
-    def __call__(self, request):
-        logger.log('Courses render was called')
-        return '200 OK', render('courses.html', objects_list=site.courses)
+    queryset = site.courses
+    template_name = 'courses.html'
 
 
 @route(routes, '/category-courses/')
@@ -108,6 +87,8 @@ class CreateCourse:
                 category = site.find_category_by_id(self.category_id)
 
                 new_course = site.create_course('record', name, category)
+                new_course.observers.append(email_sender)
+                new_course.observers.append(sms_sender)
                 site.courses.add(new_course)
 
                 logger.log(f'Course "{name}" was created')
@@ -151,3 +132,46 @@ class CopyCourse:
         except KeyError:
             logger.error('No courses have been added yet')
             return '400 Bad Request', 'No courses have been added yet'
+
+
+@route(routes, url='/students/')
+class Students(ListView):
+    queryset = site.students
+    template_name = 'students.html'
+
+
+@route(routes, url='/create-student/')
+class StudentCreate(CreateView):
+    template_name = 'create-student.html'
+
+    def create_obj(self, data: dict):
+        name = site.decode_value(data['name'])
+        new_student = site.create_user('student', name)
+        site.students.add(new_student)
+
+
+@route(routes, url='/add-student/')
+class AddStudentToCourse(CreateView):
+    template_name = 'add-student.html'
+
+    def get_context_data(self):
+        context = super().get_context_data()
+        context['courses'] = site.courses
+        context['students'] = site.students
+        return context
+
+    def create_obj(self, data: dict):
+        course_name = site.decode_value(data['course_name'])
+        course = site.get_course(course_name)
+        student_name = site.decode_value(data['student_name'])
+        student = site.get_student(student_name)
+        course.add_student(student)
+
+
+@route(routes=routes, url='/api/courses/')
+class CourseApi:
+    """Course API resource"""
+
+    @method_debug
+    def __call__(self, request):
+        return '200 OK', BaseSerializer(site.courses).dump()

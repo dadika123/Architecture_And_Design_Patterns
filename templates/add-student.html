@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}
+Add student to a course
+{% endblock %}
+
+{% block header %}
+Add student to a course
+{% endblock %}
+
+{% block menu %}
+    {% include "inc-menu.html" %}
+{% endblock %}
+
+{% block body %}
+    <div id="container1">
+        <div id="row1">
+            Add student to a course!
+        </div>
+        <div>
+            <form method="post">
+                <select size="3" name="course_name">
+                    {% for item in courses %}
+                    <option value="{{item.name}}">{{item.name}}</option>
+                    {% endfor %}
+                </select>
+                <select size="3" name="student_name">
+                    {% for item in students %}
+                    <option value="{{item.name}}">{{item.name}}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit">Add to course</button>
+            </form>
+        </div>
+		<button class="btn"><a style="text-decoration: none" href="/students/">All students</a></button>
+		<button class="btn"><a style="text-decoration: none" href="/create-student/">Create a student</a></button>
+    </div>
+{% endblock %}

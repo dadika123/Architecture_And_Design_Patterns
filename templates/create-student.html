@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}
+Create a student
+{% endblock %}
+
+{% block header %}
+Create a student
+{% endblock %}
+
+{% block menu %}
+    {% include "inc-menu.html" %}
+{% endblock %}
+
+{% block body %}
+    <div id="container1">
+        <div id="row1">
+            Create a student!
+        </div>
+        <div>
+            <form method="post">
+                <input type="text" name="name" placeholder="name">
+                <a href="/students/"><input type="submit" value="Save and return"></a>
+            </form>
+        </div>
+		<button class="btn"><a style="text-decoration: none" href="/students/">All students</a></button>
+		<button class="btn"><a style="text-decoration: none" href="/add-student/">Add a student to a course</a></button>
+    </div>
+{% endblock %}

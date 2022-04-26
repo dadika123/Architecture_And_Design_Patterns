@@ -1,5 +1,7 @@
 from time import process_time as time
 
+import jsonpickle
+
 from .creational_patterns import Logger
 
 logger = Logger('main')
@@ -44,3 +46,26 @@ def method_debug(method):
         return result
 
     return wrapper
+
+
+class BaseSerializer:
+    """Base Serializer class"""
+
+    def __init__(self, obj):
+        self.obj = obj
+
+    def dump(self):
+        """
+        Converts obj dict to JSON string
+        :return: JSON string
+        """
+        return jsonpickle.dumps(list(self.obj))
+
+    @staticmethod
+    def load(data):
+        """
+        Converts JSON string to dict
+        :param data: JSON string
+        :return: JSON dict
+        """
+        return jsonpickle.loads(data)

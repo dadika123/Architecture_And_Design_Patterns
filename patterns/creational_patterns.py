@@ -3,10 +3,14 @@ import sys
 import copy
 from datetime import datetime
 import quopri
+from typing import Union, List, Type
+
+from patterns.behavioral_patterns import CourseNotifier, ConsoleWriter, Writer
 
 
 class User:
-    pass
+    def __init__(self, name):
+        self.name = name
 
 
 class Teacher(User):
@@ -14,7 +18,10 @@ class Teacher(User):
 
 
 class Student(User):
-    pass
+
+    def __init__(self, name):
+        self.courses = []
+        super().__init__(name)
 
 
 class UserFactory:
@@ -24,10 +31,10 @@ class UserFactory:
     }
 
     @classmethod
-    def create(cls, type_):
+    def create(cls, type_, name):
         if type_ not in cls._types:
             raise AttributeError(f'Wrong User type. Can be one of: {", ".join(cls._types)}')
-        return cls._types[type_]()
+        return cls._types[type_](name)
 
 
 class CoursePrototype:
@@ -36,12 +43,26 @@ class CoursePrototype:
         return copy.deepcopy(self)
 
 
-class Course(CoursePrototype):
+class Course(CoursePrototype, CourseNotifier):
 
     def __init__(self, name, category):
         self.name = name
         self.category = category
         self.category.courses.append(self)
+        self.students = []
+        super().__init__()
+
+    def __getitem__(self, item):
+        return self.students[item]
+
+    def add_student(self, student: Student):
+        """
+        Adds student to a course
+        :param student: student to add
+        """
+        self.students.append(student)
+        student.courses.append(self)
+        self.notify()
 
 
 class InteractiveCourse(Course):
@@ -90,8 +111,8 @@ class Engine:
         self.categories = set()
 
     @staticmethod
-    def create_user(type_):
-        return UserFactory.create(type_)
+    def create_user(type_, name):
+        return UserFactory.create(type_, name)
 
     @staticmethod
     def create_category(name, category=None):
@@ -107,6 +128,10 @@ class Engine:
 
     def get_course(self, name):
         items = [course for course in self.courses if course.name == name]
+        return items[0] if items else None
+
+    def get_student(self, name) -> Student:
+        items = [student for student in self.students if student.name == name]
         return items[0] if items else None
 
     @staticmethod
@@ -138,33 +163,36 @@ class SingletonByName(type):
 class Logger(metaclass=SingletonByName):
     _default_log_path = f'{os.path.dirname(sys.argv[0])}/logs'
 
-    def __init__(self, name):
+    def __init__(self, name, writers: Union[List[Type[Writer]], Type[Writer]] = ConsoleWriter):
+        self.writers = []
         self.name = name
         if not os.path.exists(self._default_log_path):
             os.mkdir(self._default_log_path)
         self.filepath = f'{self._default_log_path}/{self.name}.txt'
+        if isinstance(writers, list):
+            for writer in writers:
+                self.writers.append(writer(file_name=self.filepath))
+        else:
+            self.writers.append(writers(file_name=self.filepath))
 
     @staticmethod
     def _append_dt_to_txt(text: str):
         dt_str = datetime.now().strftime('%d.%m.%Y %H:%M:%S')
         return f'{dt_str}: {text}'
 
-    @staticmethod
-    def _save_file(filepath: str, text: str):
-        with open(filepath, 'a+') as f:
-            f.write(f'{text}\n')
+    def _write(self, text):
+        for writer in self.writers:
+            writer.write(text)
 
     def debug(self, text):
         debug_text = self._append_dt_to_txt(f'DEBUG: {text}')
+        self._write(debug_text)
         print(debug_text)
-        self._save_file(self.filepath, debug_text)
 
     def log(self, text):
         log_text = self._append_dt_to_txt(f'LOG: {text}')
-        print(log_text)
-        self._save_file(self.filepath, log_text)
+        self._write(log_text)
 
     def error(self, text):
         error_text = self._append_dt_to_txt(f'ERROR: {text}')
-        print(error_text)
-        self._save_file(self.filepath, error_text)
+        self._write(error_text)
