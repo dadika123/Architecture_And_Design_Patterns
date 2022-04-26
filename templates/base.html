@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %}</title>
+    <title>WPS - {% block title %}{% endblock %}</title>
     {% include "inc-style.html" %}
 </head>
 <body>
     <header>
-        <h1 id="top">{% block header %}{% endblock %}</h1>
+        <h1 id="top">Wunderbar Programming School - {% block header %}{% endblock %}</h1>
     </header>
     {% block menu %}{% endblock %}
     {% block body %}{% endblock %}
 </body>
 <footer>
-    Copyright © 2021 Wunderbar.
+    Copyright © 2021 Wunderbar Programming School.
     All Rights are reserved
 </footer>
 </html>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}
+Create a category
+{% endblock %}
+
+{% block header %}
+Create a category
+{% endblock %}
+
+{% block menu %}
+    {% include "inc-menu.html" %}
+{% endblock %}
+
+{% block body %}
+    <div id="container1">
+        <div id="row1">
+            Create a category
+        </div>
+        <form method="post">
+            <input type="text" name="name" placeholder="Category name">
+            <a href="/categories/"><input type="submit" value="Save and return"></a>
+        </form>
+    </div>
+{% endblock %}

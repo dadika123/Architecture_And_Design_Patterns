@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}
+Categories
+{% endblock %}
+
+{% block header %}
+Categories
+{% endblock %}
+
+{% block menu %}
+    {% include "inc-menu.html" %}
+{% endblock %}
+
+{% block body %}
+    <div id="container1">
+        <div id="row1">
+            Find a category you would like to study!
+        </div>
+        <div id="cat_list">
+            {% for item in objects_list %}
+                <div id="cat_row">
+                    <p id="cat_name">Category {{item.name}}</p>
+                    <p id="cat_courses">Number of courses: {{item.course_count()}}</p>
+                    <button class="btn">
+                        <a style="text-decoration: none" href="/category-courses/?id={{item.id}}">
+                            View "{{item.name}}" courses
+                        </a>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+		<button class="btn"><a style="text-decoration: none" href="/create-category/">Create a category</a></button>
+    </div>
+{% endblock %}

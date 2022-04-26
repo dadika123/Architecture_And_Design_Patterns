@@ -29,15 +29,16 @@ class WunderbarApp:
         request = Request(environ['REQUEST_METHOD']).get_request(environ)
         print(f'Got {request["method"]} request with data '
               f'{request["data"] if "data" in request else request["request_params"]}')
-        code, body = self._get_view(environ['PATH_INFO'])
+        code, body = self._get_view(environ['PATH_INFO'], request)
         start_response(code, [('Content-Type', 'text/html')])
         return [body.encode('utf-8')]
 
-    def _get_view(self, path: str):
+    def _get_view(self, path: str, request):
         """
         Calls view via corresponding resource
         path and returns response code and body
         :param path: resource path
+        :param request: request
         :return: (response code, body)
         """
         path = f'{path}/' if not path.endswith('/') else path
@@ -45,7 +46,7 @@ class WunderbarApp:
             view = self.routes[path]
         else:
             view = self.not_found_view
-        return view()
+        return view(request)
 
     @property
     def not_found_view(self):
